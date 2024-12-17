@@ -71,7 +71,9 @@ def _user_overrides_or_exts(cls):
     encoders = cfg.global_config.encoders
     decoders = cfg.global_config.decoders
     mm_fields = cfg.global_config.mm_fields
-    for field in fields(cls):
+
+    cls_fields = fields(cls)
+    for field in cls_fields:
         if field.type in encoders:
             global_metadata[field.name]['encoder'] = encoders[field.type]
         if field.type in decoders:
@@ -158,10 +160,11 @@ def _decode_dataclass(cls, kvs, infer_missing):
         return kvs
     overrides = _user_overrides_or_exts(cls)
     kvs = {} if kvs is None and infer_missing else kvs
-    field_names = [field.name for field in fields(cls)]
+    cls_fields = fields(cls)
+    field_names = [field.name for field in cls_fields]
     decode_names = _decode_letter_case_overrides(field_names, overrides)
     kvs = {decode_names.get(k, k): v for k, v in kvs.items()}
-    missing_fields = {field for field in fields(cls) if field.name not in kvs}
+    missing_fields = {field for field in cls_fields if field.name not in kvs}
 
     for field in missing_fields:
         if field.default is not MISSING:
@@ -176,7 +179,7 @@ def _decode_dataclass(cls, kvs, infer_missing):
 
     init_kwargs = {}
     types = get_type_hints(cls)
-    for field in fields(cls):
+    for field in cls_fields:
         # The field should be skipped from being added
         # to init_kwargs as it's not intended as a constructor argument.
         if not field.init:
@@ -278,8 +281,10 @@ def _support_extended_types(field_type, field_value):
 
 
 def _is_supported_generic(type_):
-    if type_ is _NO_ARGS:
+    if type_ in (_NO_ARGS, str):
         return False
+    if type_ in (int, float, bool, dict, list, tuple):
+        return True
     not_str = not _issubclass_safe(type_, str)
     is_enum = _issubclass_safe(type_, Enum)
     is_generic_dataclass = _is_generic_dataclass(type_)

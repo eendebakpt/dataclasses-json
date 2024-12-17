@@ -153,6 +153,10 @@ def _is_mapping(type_):
 
 
 def _is_collection(type_):
+    if type_ in (list, tuple, dict, set):
+        return True
+    if type_ in (int, float, bool):
+        return False
     return _issubclass_safe(_get_type_origin(type_), Collection)
 
 
