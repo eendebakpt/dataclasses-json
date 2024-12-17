@@ -87,7 +87,7 @@ def _user_overrides_or_exts(cls):
         cls_config = {}
 
     overrides = {}
-    for field in fields(cls):
+    for field in cls_fields:
         field_config = {}
         # first apply global overrides or extensions
         field_metadata = global_metadata[field.name]
@@ -350,6 +350,7 @@ def _decode_generic(type_, value, infer_missing):
                     )
     return res
 
+_identity_decoder  = (lambda x: x)
 
 def _decode_dict_keys(key_type, xs, infer_missing):
     """
@@ -364,7 +365,7 @@ def _decode_dict_keys(key_type, xs, infer_missing):
     #   By some reason, "unbound" dicts are counted
     #   as having key type parameter to be TypeVar('KT')
     if key_type is None or key_type == Any or isinstance(key_type, TypeVar):
-        decode_function = key_type = (lambda x: x)
+        decode_function = key_type = _identity_decoder
     # handle a nested python dict that has tuples for keys. E.g. for
     # Dict[Tuple[int], int], key_type will be typing.Tuple[int], but
     # decode_function should be tuple, so map() doesn't break.
